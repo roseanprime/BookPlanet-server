@@ -1,0 +1,38 @@
+<body id="loginBody">
+
+
+<div id="login-form">
+
+<h id="loginH2">Log In</h2>
+
+<form action="/auth/login" method="POST">
+
+
+<label> 
+
+<input type="text" name="username" placeholder="Your username" />
+
+</label>
+
+<label> 
+
+<input type="password" name="password" placeholder="Your password" />
+
+</label>
+
+
+<button id="loginbtn" type="submit">Log In</button>
+
+
+
+{{#if errorMessage}}
+
+<p class="error">{{errorMessage}}</p>
+
+{{/if}}
+
+</form>
+
+</div>
+
+</body>
