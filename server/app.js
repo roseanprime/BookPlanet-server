@@ -31,6 +31,9 @@ app.use("/api", reviewsRoutes);
 const usersRoutes = require("./routes/users.routes");
 app.use("/api", usersRoutes);
 
+const profileRoutes = require("./routes/profile.routes");
+app.use("./api", profileRoutes);
+
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);
 
