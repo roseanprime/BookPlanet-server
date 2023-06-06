@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const fileUploader = require("../config/cloudinary.config");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const bcryptSalt = 10;
 const multer = require("multer");

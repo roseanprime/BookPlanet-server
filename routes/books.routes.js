@@ -7,8 +7,7 @@ const Book = require("./../models/Book.model");
 router.post("/create", (req, res) => {
   /* const id = req.payload._id */
 
-  const { title, author, publisher, image, description, price, currency } =
-    req.body;
+  const { title, author, publisher, image, description } = req.body;
 
   Book.create({
     title,
@@ -16,8 +15,6 @@ router.post("/create", (req, res) => {
     publisher,
     image,
     description,
-    price,
-    currency /* , owner: id  */,
   })
     .then((book) => res.json(book))
     .catch((err) =>
@@ -31,33 +28,49 @@ router.get("/list", async (req, res) => {
   res.status(200).json(allBooks);
 });
 
-//READ BOOK
-router.get("/details/:book_id", (req, res) => {
+//READ BOOK Details
+router.get("/details/:book_id", async (req, res) => {
   const { book_id } = req.params;
-
-  Book.findById(book_id)
-    .populate("owner review")
-    .then((book) => res.json(book))
-    .catch((err) =>
-      res
-        .status(500)
-        .json({ code: 500, message: "Book details not found", err })
-    );
+  try {
+    const bookDetails = await Book.findById(book_id).populate({
+      path: "review",
+      populate: {
+        path: "author",
+        model: "User",
+      },
+    });
+    res.json(bookDetails);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 //EDIT BOOK
-router.put("/:book_id", (req, res) => {
+router.put("/edit/:book_id", (req, res) => {
   const { book_id } = req.params;
   const { title, description, price, currency, image } = req.body;
 
+  // Find the book by its ID and update its fields
   Book.findByIdAndUpdate(
     book_id,
     { title, description, price, currency, image },
-    { new: true }
+    { new: true, runValidators: true } // Return the updated book and run schema validation
   )
-    .then((book) => res.json(book))
+    .then((book) => {
+      // Check if the book is found
+      if (!book) {
+        return res.status(404).json({
+          code: 404,
+          message: "Book not found",
+        });
+      }
+      // If the book is found and updated, send the updated book details as the response
+      res.json(book);
+    })
     .catch((err) =>
-      res.status(500).json({ code: 500, message: "Could not edit book", err })
+      res
+        .status(500)
+        .json({ code: 500, message: "Could not edit book", error: err.message })
     );
 });
 
@@ -73,28 +86,29 @@ router.get("/confirm/list", (req, res) => {
     );
 });
 
-/*CONFIRM BOOK TO SELL*/
-
-router.put("/confirm/:book_id", (req, res) => {
-  const { book_id } = req.params;
-  const { accepted } = req.body;
-  console.log(req.body, " -----req.body");
-  Book.findByIdAndUpdate(book_id, { accepted }, { new: true })
-    .then((book) => res.json(book))
-    .catch((err) =>
-      res.status(500).json({ code: 500, message: "Could not edit book", err })
-    );
-});
-
-//DELETE BOOK
-router.delete("/:book_id", (req, res) => {
+// DELETE BOOK
+router.delete("/:book_id", async (req, res) => {
   const { book_id } = req.params;
 
-  Book.findByIdAndDelete(book_id)
-    .then((book) => res.json(book))
-    .catch((err) =>
-      res.status(500).json({ code: 500, message: "Could not delete book", err })
-    );
+  try {
+    // Find the book by ID and delete it
+    const deletedBook = await Book.findByIdAndDelete(book_id);
+
+    if (deletedBook) {
+      res.json({ message: "Book deleted successfully" });
+    } else {
+      res.status(404).json({
+        code: 404,
+        message: "Book not found",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      code: 500,
+      message: "Could not delete book",
+      error: error.message,
+    });
+  }
 });
 
 //GOOGLE BOOKS API ROUTE
@@ -124,7 +138,7 @@ router.get("/api-books/:bookName", async (req, res) => {
         /* , owner: id  */
       });
     } else {
-      Book.create({
+      await Book.create({
         title: book.volumeInfo.title,
         author: book.volumeInfo.authors,
         publisher: book.volumeInfo.publisher,

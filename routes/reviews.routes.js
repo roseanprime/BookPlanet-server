@@ -1,76 +1,83 @@
-const express = require('express')
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
 
-const Review = require('./../models/Review.model')
-const Book = require('./../models/Book.model')
-const Post = require('./../models/Post.model')
+const Review = require("./../models/Review.model");
+const Book = require("./../models/Book.model");
+const Post = require("./../models/Post.model");
 
-const { response } = require('express')
-
-
+const { response } = require("express");
 
 //CREATE REVIEW
-router.post('/create', (req, res) => {
+router.post("/create-review/:bookId/:userId", async (req, res) => {
+  try {
+    const { review, rating } = req.body;
+    const { userId, bookId } = req.params;
 
-    const loggedUser = req.session.currentUser
-    const id = loggedUser._id
+    const newReview = await Review.create({
+      content: review,
+      rating: rating,
+      author: userId,
+    });
 
-    const { title, content, rating, price, file_id } = req.body
+    const updateBook = await Book.findByIdAndUpdate(bookId, {
+      $push: { review: newReview._id },
+    });
 
-    Review
-        .create({ title, content, rating,author: id })
-        .then(response => {
+    res.status(201).json(updateBook);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create a review", error });
+  }
+});
 
-            const ModelChosen = !price ? Post : Book
-          
-            return ModelChosen
-                .findByIdAndUpdate(file_id, { $push: { review: response._id } }, { new: true })
-        })
-        .then(response => res.json(response))
-        .catch(err => res.status(500).json({ code: 500, message: 'Could not create review', err }))
-})
+router.delete("/delete-review/:reviewId", async (req, res) => {
+  try {
+const {reviewId} = req.params
 
+const delbook = await Review.findByIdAndDelete(reviewId)
+res.status(201).json(delbook);
 
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
 
-//READ REVIEW 
-router.get('/details/:review_id', (req, res) => {
+//READ REVIEW
+router.get("/details/:review_id", (req, res) => {
+  const { review_id } = req.params;
 
-    const { review_id } = req.params
-
-    Review
-        .findById(review_id)
-        .then(review => res.json(review))
-        .catch(err => res.status(500).json({ code: 500, message: 'Review details not found', err }))
-})
-
-
+  Review.findById(review_id)
+    .then((review) => res.json(review))
+    .catch((err) =>
+      res
+        .status(500)
+        .json({ code: 500, message: "Review details not found", err })
+    );
+});
 
 //EDIT REVIEW
-router.put('/:review_id', (req, res) => {
+router.put("/:review_id", (req, res) => {
+  const { review_id } = req.params;
+  const { title, content, rating } = req.body;
 
-    const { review_id } = req.params
-    const { title, content, rating } = req.body
-
-    Review
-        .findByIdAndUpdate(review_id, { title, content, rating }, { new: true })
-        .then(review => res.json(review))
-        .catch(err => res.status(500).json({ code: 500, message: 'Could not edit review', err }))
-})
-
-
+  Review.findByIdAndUpdate(review_id, { title, content, rating }, { new: true })
+    .then((review) => res.json(review))
+    .catch((err) =>
+      res.status(500).json({ code: 500, message: "Could not edit review", err })
+    );
+});
 
 //DELETE REVIEW
 
-router.delete('/:review_id', (req, res) => {
+router.delete("/:review_id", (req, res) => {
+  const { review_id } = req.params;
 
-    const { review_id } = req.params
+  Review.findByIdAndDelete(review_id)
+    .then((review) => res.json(review))
+    .catch((err) =>
+      res
+        .status(500)
+        .json({ code: 500, message: "Could not delete review", err })
+    );
+});
 
-    Review
-        .findByIdAndDelete(review_id)
-        .then(review => res.json(review))
-        .catch(err => res.status(500).json({ code: 500, message: 'Could not delete review', err }))
-})
-
-
-
-module.exports = router
+module.exports = router;

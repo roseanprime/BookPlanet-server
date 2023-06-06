@@ -24,10 +24,6 @@ const userSchema = new Schema({
   image: {
     type: String,
   },
-  cover: {
-    type: String,
-    default: 'https://wallpaper.dog/large/817497.jpg'
-  },
  
 }, {
   timestamps: true,

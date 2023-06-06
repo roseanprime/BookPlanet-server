@@ -11,15 +11,10 @@ const bookSchema = new Schema(
     },
     image: {
       type: String,
-      default: "https://wallpaper.dog/large/817497.jpg",
     },
     description: String,
     price: {
       type: Number,
-    },
-    currency: {
-      type: String,
-      default: "€",
     },
     review: [
       {
