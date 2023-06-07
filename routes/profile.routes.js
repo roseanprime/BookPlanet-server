@@ -23,6 +23,27 @@ router.get("/profile", isLoggedIn, (req, res, next) => {
     .catch((err) => next(err));
 });
 
+ /*Add Book to favorites */
+ 
+ router.post("/favorites", isLoggedIn, async (req, res, next) => {
+  try {
+    const { bookId } = req.body;
+    const userId = req.session.currentUser._id;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $push: { favorites: bookId } },
+      { new: true }
+    );
+
+    req.session.currentUser = updatedUser;
+    res.redirect("/profile");
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 /* Edit profile - get */
 router.get("/:id/edit", isLoggedIn, (req, res, next) => {
   const user = req.session.currentUser._id;
